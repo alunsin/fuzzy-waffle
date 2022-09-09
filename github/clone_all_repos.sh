@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ux
+set -u
 
 ################################################################################
 # Grab the list of all the repos from an organization
@@ -12,6 +12,10 @@ set -ux
 ################################################################################
 
 #GHTOKEN="<Replace by you GH app token>"
+# To list private repos, enable repos acces to your access token
+#See https://github.com/settings/tokens
+
+#URL="https://api.github.com/orgs/containerd/repos"
 #URL="https://api.github.com/orgs/containerd/repos"
 #URL=https://api.github.com/orgs/containerd/repos\?per_page=90\&q=archived%3Afalse
 
@@ -28,7 +32,6 @@ REPOS_OUT=repo.list
 HEADERS=(-H "Accept: application/vnd.github+json")
 HEADERS+=(-H "Authorization: token $GHTOKEN")
 
-
 [ -f $REPOS_OUT ] && rm $REPOS_OUT
 
 
@@ -37,13 +40,10 @@ PAGE=0
 NEXT_PAGE_URL=$URL
 
 while true; do
-  echo "Getting page 0 ${PAGE}"
-
   let PAGE++
 
   echo "Getting page ${PAGE}"
-  curl -sL $HEADERS{@} $NEXT_PAGE_URL -o $PAYLOAD_OUT -D $HEADER_OUT
-
+  curl -sL "${HEADERS[@]}" -o $PAYLOAD_OUT -D $HEADER_OUT $NEXT_PAGE_URL
   #Parse git repo url (ssh)
   jq -r '.. | .ssh_url? //empty' $PAYLOAD_OUT >> $REPOS_OUT
 
@@ -57,9 +57,9 @@ while true; do
 
 done
 
-
 COUNT=`cat $REPOS_OUT | wc -l`
 echo "Repossitory count: $COUNT"
+
 
 echo Cloning the repos
 
